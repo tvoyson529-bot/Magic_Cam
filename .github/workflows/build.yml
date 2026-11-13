@@ -1,4 +1,4 @@
-name: Build Magic Cam Zygisk Module
+
 
 on:
   push:
