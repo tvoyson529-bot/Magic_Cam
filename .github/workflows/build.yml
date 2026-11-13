@@ -1,53 +1,25 @@
-name: Build Magic Cam Zygisk Module
-
-on:
-  push:
-    branches: [ main, develop ]
-    tags: [ 'v*' ]
-  pull_request:
-    branches: [ main ]
-
+name: Build
+on: [push, workflow_dispatch]
 jobs:
   build:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Setup Android NDK
-      uses: nttld/setup-ndk@v1
-      with:
-        ndk-version: r25c
-        add-to-path: false
-    
-    - name: Set NDK path
-      run: echo "ANDROID_NDK_ROOT=$ANDROID_NDK_LATEST_HOME" >> $GITHUB_ENV
-    
-    - name: Install build dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y cmake ninja-build
-    
-    - name: Build module
-      run: |
-        chmod +x build.sh
-        ./build.sh
-    
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: MagicCam-Module
-        path: MagicCam-Module/
-        retention-days: 30
-    
-    - name: Create Release
-      if: startsWith(github.ref, 'refs/tags/v')
-      uses: softprops/action-gh-release@v2
-      with:
-        files: MagicCam-Module/**/*
-        draft: false
-        prerelease: false
-        generate_release_notes: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Setup NDK
+        run: echo "y" | sdkmanager "ndk;25.2.9519653"
+      - name: Build
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MagicCam
+          path: "**/*.zip"
